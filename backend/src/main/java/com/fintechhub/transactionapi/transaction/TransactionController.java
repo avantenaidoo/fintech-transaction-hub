@@ -2,6 +2,8 @@
 // Controller with POST /api/transactions & GET /api/transaction/{id}
 package com.fintechhub.transactionapi.transaction;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +41,16 @@ public class TransactionController {
 
         // Return the response and not the JPA entity
         return TransactionResponse.from(transaction);
+    }
+
+    // Return existing response DTO and idempotency remains private
+
+    @GetMapping
+    public List<TransactionResponse> getTransactions() {
+        return transactionService.getRecentTransactions()
+                .stream()
+                .map(TransactionResponse::from)
+                .toList();
     }
 
     @GetMapping("/{id}")

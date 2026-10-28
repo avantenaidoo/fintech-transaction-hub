@@ -234,4 +234,25 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.path").value("/api/transactions"));
     }
 
+    // Test creates transaction and confirms in list.
+    @Test
+    void shouldListTransactionsThroughApi() throws Exception {
+        mockMvc.perform(post("/api/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "description": "List endpoint payment",
+                          "amount": 525.50,
+                          "currency": "ZAR",
+                          "idempotencyKey": "api-list-endpoint-001"
+                        }
+                        """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/transactions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].description",
+                        org.hamcrest.Matchers.hasItem("List endpoint payment")));
+    }
+
 }

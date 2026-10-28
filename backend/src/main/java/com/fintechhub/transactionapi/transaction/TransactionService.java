@@ -3,9 +3,12 @@
 package com.fintechhub.transactionapi.transaction;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,18 @@ public class TransactionService {
     public Transaction getTransactionById(Long id) {
         return transactionRepository.findById(id)
                 .orElseThrow(() -> new TransactionNotFoundException(id));
+    }
+
+    // Returns up to 100 transactions newest first, without loading entire database
+    @Transactional(readOnly = true)
+    public List<Transaction> getRecentTransactions() {
+        return transactionRepository.findAll(
+                PageRequest.of(
+                        0,
+                        100,
+                        Sort.by(Sort.Direction.DESC, "createdAt")
+                )
+        ).getContent();
     }
 
     @Transactional
