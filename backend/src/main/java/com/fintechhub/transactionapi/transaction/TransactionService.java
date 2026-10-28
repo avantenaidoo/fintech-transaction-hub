@@ -23,6 +23,13 @@ public class TransactionService {
         this.transactionWriter = transactionWriter;
     }
 
+    // Add transaction retrieval 
+    @Transactional(readOnly = true)
+    public Transaction getTransactionById(Long id) {
+        return transactionRepository.findById(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+    }
+
     @Transactional
     public Transaction createTransaction(
             String description,

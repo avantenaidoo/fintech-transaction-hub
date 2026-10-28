@@ -1,5 +1,5 @@
 // Rest controller connecting HTTP requests from Angular to existing TransactionService
-// Controller with 2 methods POST /api/transactions & GET /api/transaction/{id}
+// Controller with POST /api/transactions & GET /api/transaction/{id}
 package com.fintechhub.transactionapi.transaction;
 
 import org.springframework.http.HttpStatus;
@@ -17,15 +17,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/transactions")
 public class TransactionController {
 
+    // Removed controller dependency on TransactionRepository
     private final TransactionService transactionService;
-    private final TransactionRepository transactionRepository;
 
-    public TransactionController(
-            TransactionService transactionService,
-            TransactionRepository transactionRepository
-    ) {
+    public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
-        this.transactionRepository = transactionRepository;
     }
 
     @PostMapping
@@ -47,8 +43,7 @@ public class TransactionController {
 
     @GetMapping("/{id}")
     public TransactionResponse getTransaction(@PathVariable Long id) {
-        Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new TransactionNotFoundException(id));
+        Transaction transaction = transactionService.getTransactionById(id);
 
         return TransactionResponse.from(transaction);
     }
