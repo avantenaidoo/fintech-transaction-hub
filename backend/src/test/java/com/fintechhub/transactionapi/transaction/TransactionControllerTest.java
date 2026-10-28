@@ -174,4 +174,24 @@ class TransactionControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.currency").value("ZAR"));
     }
+
+    // Add Missing Amount test
+    @Test
+    void shouldRejectMissingAmount() throws Exception {
+        mockMvc.perform(post("/api/transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                        {
+                                        "description": "Missing amount payment",
+                                        "currency": "ZAR",
+                                        "idempotencyKey": "api-missing-amount"
+                                        }
+                                        """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/api/transactions"));
+    }
 }
