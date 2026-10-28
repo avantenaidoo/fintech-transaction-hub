@@ -1,7 +1,7 @@
 
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CreateTransactionRequest,
@@ -19,6 +19,7 @@ import {
 })
 export class App implements OnInit {
   private readonly transactionService = inject(TransactionService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   transactions: Transaction[] = [];
   loading = true;
@@ -45,6 +46,7 @@ export class App implements OnInit {
       next: (transactions) => {
         this.transactions = transactions;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.getErrorMessage(
@@ -52,6 +54,7 @@ export class App implements OnInit {
           'Could not load transactions. Check that the backend is running.',
         );
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -101,6 +104,7 @@ export class App implements OnInit {
         this.currency = 'ZAR';
         this.submitting = false;
         this.showForm = false;
+        this.cdr.markForCheck();
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.getErrorMessage(
@@ -108,6 +112,7 @@ export class App implements OnInit {
           'Could not create the transaction. Please try again.',
         );
         this.submitting = false;
+        this.cdr.markForCheck();
       },
     });
   }
