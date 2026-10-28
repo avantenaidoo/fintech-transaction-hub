@@ -194,4 +194,44 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.path").value("/api/transactions"));
     }
+
+    // Tests to check existing error responses
+
+    @Test
+    void shouldReturnConsistentErrorResponseForMalformedJson() throws Exception {
+        mockMvc.perform(post("/api/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "description": "Incomplete payment",
+                          "amount": 250.00,
+                        """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").isString())
+                .andExpect(jsonPath("$.path").value("/api/transactions"));
+    }
+
+    @Test
+    void shouldReturnConsistentErrorResponseForInvalidCurrency() throws Exception {
+        mockMvc.perform(post("/api/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "description": "Invalid currency payment",
+                          "amount": 250.00,
+                          "currency": "XYZ",
+                          "idempotencyKey": "api-invalid-currency-001"
+                        }
+                        """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").isString())
+                .andExpect(jsonPath("$.path").value("/api/transactions"));
+    }
+
 }

@@ -8,6 +8,7 @@ import java.time.Instant;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -84,6 +85,21 @@ public class ApiExceptionHandler {
                 request.getRequestURI()
         );
     }
+    
+    // Add exception handler for malinformed JSON and invalid enum values with currency code
+    
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnreadableMessage(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Request body is malformed or contains an invalid value.",
+                request.getRequestURI()
+        );
+    }
+
 
     private ResponseEntity<ApiErrorResponse> buildErrorResponse(
             HttpStatus status,
