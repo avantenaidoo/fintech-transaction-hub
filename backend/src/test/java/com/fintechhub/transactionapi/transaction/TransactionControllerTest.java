@@ -9,10 +9,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.jayway.jsonpath.JsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -112,5 +115,51 @@ class TransactionControllerTest {
                                 """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").exists());
+    }
+
+    // API validation tests for transaction without specifying currency and default to ZAR
+
+    @Test
+    void shouldRetrieveExistingTransactionThroughApi() throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                "description": "Retrieval payment",
+                                "amount": 175.50,
+                                "currency": "ZAR",
+                                "idempotencyKey": "api-retrieval-001"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andReturn();
+
+        long id = JsonPath
+                .parse(result.getResponse().getContentAsString())
+                .read("$.id", Long.class);
+
+        mockMvc.perform(get("/api/transactions/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.description").value("Retrieval payment"))
+                .andExpect(jsonPath("$.amount").value(175.50))
+                .andExpect(jsonPath("$.currency").value("ZAR"));
+    }
+
+    @Test
+    void shouldDefaultCurrencyToZarWhenCurrencyIsOmitted()
+            throws Exception {
+        mockMvc.perform(post("/api/transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "description": "Default currency payment",
+                                  "amount": 100.00,
+                                  "idempotencyKey": "api-default-currency-001"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.currency").value("ZAR"));
     }
 }
