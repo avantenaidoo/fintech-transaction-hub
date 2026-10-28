@@ -3,6 +3,10 @@
 package com.fintechhub.transactionapi.transaction;
 
 import java.math.BigDecimal;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -12,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+// Imports for Concurrency test
+import java.util.concurrent.Callable;
 @SpringBootTest
 class TransactionServiceIntegrationTest {
 
@@ -93,5 +99,41 @@ class TransactionServiceIntegrationTest {
         );
 
         assertEquals(1, transactionRepository.count());
+    }
+
+    @Test
+    void shouldNotCreateDuplicateTransactionsForConcurrentRequests()
+            throws Exception {
+
+        String concurrentKey = "concurrent-payment-001";
+
+        int requestCount = 2;
+
+        ExecutorService executor = Executors.newFixedThreadPool(requestCount);
+
+        try {
+            Callable<Transaction> request = () ->
+                    transactionService.createTransaction(
+                            "Concurrent payment",
+                            new BigDecimal("300.00"),
+                            CurrencyCode.ZAR,
+                            concurrentKey
+                    );
+
+            Future<Transaction> first = executor.submit(request);
+            Future<Transaction> second = executor.submit(request);
+
+            Transaction firstResult = first.get(10, TimeUnit.SECONDS);
+            Transaction secondResult = second.get(10, TimeUnit.SECONDS);
+
+            assertEquals(firstResult.getId(), secondResult.getId());
+
+            assertEquals(
+                    1,
+                    transactionRepository.countByIdempotencyKey(concurrentKey)
+            );
+        } finally {
+            executor.shutdownNow();
+        }
     }
 }

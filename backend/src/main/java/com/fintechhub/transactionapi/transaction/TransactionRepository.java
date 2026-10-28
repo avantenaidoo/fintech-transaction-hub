@@ -11,4 +11,7 @@ public interface TransactionRepository
     boolean existsByIdempotencyKey(String idempotencyKey);
 
     Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
+
+    // Adding idempotency count method
+    long countByIdempotencyKey(String idempotencyKey);
 }
