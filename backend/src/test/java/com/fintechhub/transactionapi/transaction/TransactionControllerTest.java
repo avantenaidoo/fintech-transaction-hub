@@ -24,6 +24,7 @@ class TransactionControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    // Updated to verify response
     @Test
     void shouldCreateTransactionThroughApi() throws Exception {
         mockMvc.perform(post("/api/transactions")
@@ -47,13 +48,19 @@ class TransactionControllerTest {
 
     @Test
     void shouldReturnNotFoundForUnknownTransaction() throws Exception {
-        mockMvc.perform(get("/api/transactions/999999999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").exists());
+            mockMvc.perform(get("/api/transactions/999999999"))
+                            .andExpect(status().isNotFound())
+                            .andExpect(jsonPath("$.timestamp").exists())
+                            .andExpect(jsonPath("$.status").value(404))
+                            .andExpect(jsonPath("$.error").value("Not Found"))
+                            .andExpect(jsonPath("$.message")
+                                            .value("Transaction not found with ID: 999999999"))
+                            .andExpect(jsonPath("$.path")
+                                            .value("/api/transactions/999999999"));
     }
 
     // Adding API validation tests for invalid input and idempotency conflicts through HTTP endpoints
-
+    // Updated to check the validation errors using same response structure
     @Test
     void shouldRejectMissingDescription() throws Exception {
         mockMvc.perform(post("/api/transactions")
@@ -66,7 +73,12 @@ class TransactionControllerTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists());
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/api/transactions"));
+
     }
 
     @Test
