@@ -3,16 +3,6 @@
 
 package com.fintechhub.transactionapi.reconciliation;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.core.JacksonException;
-import com.fintechhub.transactionapi.transaction.Transaction;
-import com.fintechhub.transactionapi.transaction.TransactionRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +13,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.fintechhub.transactionapi.transaction.Transaction;
+import com.fintechhub.transactionapi.transaction.TransactionRepository;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 @Service
 public class ReconciliationService {
 
@@ -32,6 +34,7 @@ public class ReconciliationService {
     private final Path projectRoot;
     private final Path settlementFile;
     private final long timeoutSeconds;
+    private final ProcessLauncher processLauncher;
 
     public ReconciliationService(
             TransactionRepository transactionRepository,
@@ -39,7 +42,9 @@ public class ReconciliationService {
             @Value("${reconciliation.python-command}") String pythonCommand,
             @Value("${reconciliation.project-root}") String projectRoot,
             @Value("${reconciliation.settlement-file}") String settlementFile,
-            @Value("${reconciliation.timeout-seconds:15}") long timeoutSeconds) {
+            @Value("${reconciliation.timeout-seconds:15}") long timeoutSeconds,
+            ProcessLauncher processLauncher) {
+
         this.transactionRepository = transactionRepository;
         this.objectMapper = objectMapper;
         this.pythonCommand = pythonCommand;
@@ -50,6 +55,7 @@ public class ReconciliationService {
                 .resolve(settlementFile)
                 .normalize();
         this.timeoutSeconds = timeoutSeconds;
+        this.processLauncher = processLauncher;
     }
 
     public JsonNode reconcile() {
@@ -73,15 +79,14 @@ public class ReconciliationService {
         Process process = null;
 
         try {
-            ProcessBuilder builder = new ProcessBuilder(
-                    pythonCommand,
-                    "-m",
-                    "reconciliation.src.cli",
-                    "--settlement-file",
-                    settlementFile.toString());
-
-            builder.directory(projectRoot.toFile());
-            process = builder.start();
+            process = processLauncher.start(
+                    List.of(
+                            pythonCommand,
+                            "-m",
+                            "reconciliation.src.cli",
+                            "--settlement-file",
+                            settlementFile.toString()),
+                    projectRoot);
 
             Process runningProcess = process;
 
