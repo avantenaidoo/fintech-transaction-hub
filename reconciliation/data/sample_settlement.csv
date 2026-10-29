@@ -1,0 +1,4 @@
+reference,amount,currency
+txn-001,100.50,ZAR
+txn-002,255.00,ZAR
+txn-004,30.00,EUR
