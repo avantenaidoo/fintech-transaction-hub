@@ -146,6 +146,31 @@ class TestReconcileTransactions(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "non-empty reference"):
             reconcile_transactions(invalid_transactions, [])
 
+    # Add 3 validation tests for positive transaction amounts and supported currencies
+    def test_rejects_zero_amount(self):
+        transactions = [
+            {"reference": "txn-001", "amount": "0.00", "currency": "ZAR"}
+        ]
+
+        with self.assertRaisesRegex(ValueError, "amount must be greater than zero"):
+            reconcile_transactions(transactions, [])
+
+    def test_rejects_negative_amount(self):
+        transactions = [
+            {"reference": "txn-001", "amount": "-10.00", "currency": "ZAR"}
+        ]
+
+        with self.assertRaisesRegex(ValueError, "amount must be greater than zero"):
+            reconcile_transactions(transactions, [])
+
+    def test_rejects_unsupported_currency(self):
+        transactions = [
+            {"reference": "txn-001", "amount": "10.00", "currency": "AUD"}
+        ]
+
+        with self.assertRaisesRegex(ValueError, "unsupported currency"):
+            reconcile_transactions(transactions, [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,6 +7,7 @@ from typing import Any, Iterable, Mapping
 
 
 TransactionRecord = Mapping[str, Any]
+SUPPORTED_CURRENCIES = {"ZAR", "USD", "EUR", "GBP"}
 
 
 def reconcile_transactions(
@@ -110,11 +111,18 @@ def _index_transactions(
                 f"Transaction {reference} must have a finite amount."
             )
 
+        # Ensure that 0, negative numbers, NaN and infinity cannot pass validation
+        if amount <= 0:
+            raise ValueError(
+                f"Transaction {reference} amount must be greater than zero."
+            )
+
+        # Requires exact currency supported code
         currency = transaction["currency"]
 
-        if not isinstance(currency, str) or not currency.strip():
+        if not isinstance(currency, str) or currency not in SUPPORTED_CURRENCIES:
             raise ValueError(
-                f"Transaction {reference} must have a valid currency."
+                f"Transaction {reference} has an unsupported currency: {currency!r}."
             )
 
         indexed[reference] = {
