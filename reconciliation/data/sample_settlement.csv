@@ -1,4 +1,4 @@
 reference,amount,currency
-txn-001,100.50,ZAR
-txn-002,255.00,ZAR
-txn-004,30.00,EUR
+txn_565679bf-2211-40f6-9fac-9387a930fc11,123.45,ZAR
+txn_63072776-6251-49b3-b8cd-daca2396baaf,500.00,ZAR
+txn_external_001,75.00,EUR
