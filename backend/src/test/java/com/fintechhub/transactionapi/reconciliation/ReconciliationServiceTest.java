@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -91,7 +92,8 @@ class ReconciliationServiceTest {
                 exception.getMessage());
     }
 
-    // Add process-failure tests HTTP 502- Python exits with an error, returns invalid JSON, HTTP 504 exceeds the time limit
+    // Verify Python process failures return safe API responses:
+    // HTTP 502 for process errors and invalid JSON; HTTP 504 for timeouts
     @Test
     void reconcileReturnsBadGatewayWhenPythonExitsWithError() throws Exception {
         createSettlementFile();
@@ -107,6 +109,11 @@ class ReconciliationServiceTest {
                 service::reconcile);
 
         assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatusCode());
+        assertEquals(
+                "Python reconciliation failed.",
+                exception.getReason());
+
+        assertFalse(exception.getReason().contains("script failed"));
     }
 
     @Test
@@ -124,6 +131,9 @@ class ReconciliationServiceTest {
                 service::reconcile);
 
         assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatusCode());
+        assertEquals(
+                "Python returned invalid reconciliation JSON.",
+                exception.getReason());
     }
 
     @Test
@@ -141,6 +151,9 @@ class ReconciliationServiceTest {
                 service::reconcile);
 
         assertEquals(HttpStatus.GATEWAY_TIMEOUT, exception.getStatusCode());
+        assertEquals(
+                "Python reconciliation exceeded its time limit.",
+                exception.getReason());
         verify(process).destroyForcibly();
     }
 
