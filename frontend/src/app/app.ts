@@ -10,6 +10,11 @@ import {
   TransactionService,
 } from './services/transaction.service';
 
+import {
+  ReconciliationResult,
+  ReconciliationService,
+} from './services/reconciliation.service';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -19,6 +24,7 @@ import {
 })
 export class App implements OnInit {
   private readonly transactionService = inject(TransactionService);
+  private readonly reconciliationService = inject(ReconciliationService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   transactions: Transaction[] = [];
@@ -27,6 +33,11 @@ export class App implements OnInit {
   showForm = false;
   errorMessage = '';
   successMessage = '';
+
+  reconciliationResult: ReconciliationResult | null = null;
+  reconciling = false;
+  reconciliationError = '';
+  lastReconciledAt: Date | null = null;
 
   description = '';
   amount: number | null = null;
@@ -112,6 +123,32 @@ export class App implements OnInit {
           'Could not create the transaction. Please try again.',
         );
         this.submitting = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  runReconciliation(): void {
+    if (this.reconciling) {
+      return;
+    }
+
+    this.reconciling = true;
+    this.reconciliationError = '';
+
+    this.reconciliationService.reconcile().subscribe({
+      next: (result) => {
+        this.reconciliationResult = result;
+        this.lastReconciledAt = new Date();
+        this.reconciling = false;
+        this.cdr.markForCheck();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.reconciliationError = this.getErrorMessage(
+          error,
+          'Could not complete reconciliation. Please try again.',
+        );
+        this.reconciling = false;
         this.cdr.markForCheck();
       },
     });
