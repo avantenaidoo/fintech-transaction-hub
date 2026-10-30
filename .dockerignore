@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+!.env.example
+
+.vscode/
+
+**/node_modules/
+**/dist/
+**/target/
+
+frontend/
+docs/
+sample-data/
+compose/

@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: fintech-hub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fintech_hub
+      POSTGRES_USER: fintech_app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fintech_app -d fintech_hub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: fintech-hub-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/fintech_hub
+      DB_USERNAME: fintech_app
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+      PYTHON_COMMAND: python3
+      PROJECT_ROOT: /app
+      SETTLEMENT_FILE: reconciliation/data/sample_settlement.csv
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
