@@ -38,3 +38,6 @@ Thumbs.db
 # Local database and container overrides
 *.sqlite3
 docker-compose.override.yml
+
+# Personal local development notes
+.local/
