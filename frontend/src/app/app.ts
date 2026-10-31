@@ -1,7 +1,7 @@
 
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CreateTransactionRequest,
@@ -31,6 +31,9 @@ export class App implements OnInit {
   loading = true;
   submitting = false;
   showForm = false;
+
+  @ViewChild('transactionForm')
+  transactionForm?: ElementRef<HTMLElement>;
   errorMessage = '';
   successMessage = '';
 
@@ -47,6 +50,30 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.loadTransactions();
+  }
+
+  openTransactionForm(): void {
+    this.showForm = true;
+
+    setTimeout(() => {
+      this.transactionForm?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+  }
+
+  toggleTransactionForm(): void {
+    if (this.showForm) {
+      this.showForm = false;
+      this.errorMessage = '';
+      this.successMessage = '';
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.openTransactionForm();
   }
 
   loadTransactions(): void {

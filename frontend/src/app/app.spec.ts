@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -49,6 +50,110 @@ describe('App', () => {
 
     fixture.destroy();
 
+  });
+
+  it('should open the transaction form and scroll when clicking New transaction', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    httpTesting.expectOne('/api/transactions').flush([]);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const newTransactionButton = Array.from(
+      compiled.querySelectorAll('button'),
+    ).find((button) => button.textContent?.includes('New transaction'));
+
+    expect(newTransactionButton).toBeTruthy();
+
+    newTransactionButton!.click();
+    fixture.detectChanges();
+
+    const form = compiled.querySelector('#transactionForm') as HTMLElement;
+
+    expect(form).toBeTruthy();
+
+    const scrollSpy = vi.fn();
+
+    Object.defineProperty(form, 'scrollIntoView', {
+      configurable: true,
+      value: scrollSpy,
+    });
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(scrollSpy).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
+    fixture.destroy();
+  });
+
+  it('should open the transaction form and scroll to it when clicking Create your first transaction', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    httpTesting.expectOne('/api/transactions').flush([]);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const createButton = Array.from(
+      compiled.querySelectorAll('button'),
+    ).find((button) =>
+      button.textContent?.includes('Create your first transaction'),
+    );
+
+    expect(createButton).toBeTruthy();
+
+    createButton!.click();
+    fixture.detectChanges();
+
+    const form = compiled.querySelector('#transactionForm');
+    expect(form).toBeTruthy();
+
+    const scrollSpy = vi.fn();
+
+    Object.defineProperty(form, 'scrollIntoView', {
+      configurable: true,
+      value: scrollSpy,
+    });
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(scrollSpy).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
+    fixture.destroy();
+  });
+
+  it('should close the transaction form when clicking Close form', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    httpTesting.expectOne('/api/transactions').flush([]);
+    fixture.componentInstance.showForm = true;
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const closeButton = Array.from(
+      compiled.querySelectorAll('button'),
+    ).find((button) => button.textContent?.includes('Close form'));
+
+    expect(closeButton).toBeTruthy();
+
+    closeButton!.click();
+    fixture.detectChanges();
+
+    expect(
+      compiled.querySelector('#transactionForm'),
+    ).toBeNull();
+
+    fixture.destroy();
   });
 
   it('should display an error when loading transactions fails', () => {
